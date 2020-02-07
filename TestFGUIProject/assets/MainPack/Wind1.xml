@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1134,640">
+  <displayList>
+    <graph id="n0_oes1" name="test" xy="293,11" size="486,81" type="rect"/>
+    <text id="n1_oes1" name="n1" xy="518,42" size="41,19" fontSize="12" text="主界面"/>
+    <component id="n3_oes1" name="btnShow" src="l5121" fileName="Btn.xml" xy="79,553">
+      <Button title="显示窗口2"/>
+    </component>
+  </displayList>
+</component>

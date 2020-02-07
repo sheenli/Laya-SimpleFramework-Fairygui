@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="6krxzefq">
+  <resources>
+    <component id="l5120" name="Wind1.xml" path="/" exported="true"/>
+    <component id="l5121" name="Btn.xml" path="/"/>
+    <component id="l5122" name="Wind2.xml" path="/" exported="true"/>
+  </resources>
+  <publish name="" path="G:\tst\charon\layapro\bin\fgui" packageCount="2"/>
+</packageDescription>

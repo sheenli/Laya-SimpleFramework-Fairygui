@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="100,47" extention="Button">
+  <displayList>
+    <graph id="n3_oes1" name="n3" xy="0,0" size="100,47" type="rect"/>
+    <text id="n4_oes1" name="title" xy="20,14" size="60,19" fontSize="12" text="显示窗口2">
+      <relation target="" sidePair="center-center,middle-middle"/>
+    </text>
+  </displayList>
+  <Button/>
+</component>

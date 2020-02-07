@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1134,640">
+  <displayList>
+    <graph id="n7_oes1" name="n7" xy="136,0" size="856,642" type="rect" fillColor="#ff006600"/>
+    <graph id="n0_oes1" name="test" xy="293,11" size="486,81" type="rect"/>
+    <text id="n1_oes1" name="n1" xy="518,42" size="36,19" fontSize="12" text="窗口2"/>
+    <component id="n6_oes1" name="BtnClose" src="l5121" fileName="Btn.xml" xy="510,514">
+      <Button title="关闭"/>
+    </component>
+  </displayList>
+</component>
