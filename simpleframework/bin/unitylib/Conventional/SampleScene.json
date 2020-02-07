@@ -1,0 +1,49 @@
+{
+  "objInfos": [
+    {
+      "name": "Main Camera",
+      "instanceID": 0,
+      "coms": [
+        {
+          "name": "GameGraphOwner",
+          "data": "res/graph/GameGraphCanvas.json"
+        }
+      ],
+      "childs": []
+    },
+    {
+      "name": "Directional Light",
+      "instanceID": 1,
+      "coms": [],
+      "childs": []
+    },
+    {
+      "name": "Cube",
+      "instanceID": 2,
+      "coms": [
+        {
+          "name": "TransformRef",
+          "data": "d2b12071-9a55-461a-afe7-e873fd1c5f88"
+        }
+      ],
+      "childs": []
+    },
+    {
+      "name": "GameObject",
+      "instanceID": 3,
+      "coms": [
+        {
+          "name": "GlobalBlackboard",
+          "data": "[{\"key\":\"mygo\",\"type\":\"go\",\"value\":\"d2b12071-9a55-461a-afe7-e873fd1c5f88\"},{\"key\":\"myfloat\",\"type\":\"float\",\"value\":0.5},{\"key\":\"myfloat1\",\"type\":\"float\",\"value\":0.0}]"
+        }
+      ],
+      "childs": []
+    },
+    {
+      "name": "UndoProRecords",
+      "instanceID": 4,
+      "coms": [],
+      "childs": []
+    }
+  ]
+}
