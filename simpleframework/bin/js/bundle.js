@@ -34,11 +34,13 @@
             this.mValue = v;
         }
         add(flag) {
-            this.mValue |= flag;
+            if (!this.has(flag))
+                this.mValue |= flag;
             return this;
         }
         remove(flag) {
-            this.mValue &= ~flag;
+            if (this.has(flag))
+                this.mValue &= ~flag;
             return this;
         }
         has(flag) {
@@ -51,8 +53,8 @@
             this.func = func;
             this.thisObj = thisObj;
         }
-        run(args = null) {
-            return this.func.call(this.thisObj, args);
+        run(...argArray) {
+            return this.func.call(this.thisObj, ...argArray);
         }
     }
     class Listener {
@@ -79,18 +81,12 @@
             }
         }
         has(func, thisObj) {
-            for (let i = this.func.length - 1; i >= 0; i--) {
-                let fun = this.func[i];
-                if (fun.func == func && fun.thisObj == thisObj) {
-                    return true;
-                }
-            }
-            return false;
+            return this.func.findIndex(a => a.thisObj == thisObj && a.func == func) != -1;
         }
-        run(args = null) {
+        run(...args) {
             for (let i = 0; i < this.func.length; i++) {
                 let func = this.func[i];
-                func.run(args);
+                func.func.call(func.thisObj, ...args);
             }
         }
     }
@@ -252,8 +248,11 @@
             if (length == 0) {
                 return;
             }
-            for (let i = 0; i < length; i++) {
+            for (let i = 0; i < list.length; i++) {
                 let eventBin = list[i];
+                if (eventBin == null) {
+                    continue;
+                }
                 eventBin.listener.call(eventBin.thisObject, event);
                 if (eventBin.dispatchOnce) {
                     this.onceList.push(eventBin);
@@ -336,8 +335,7 @@
                     }
                 }
                 else {
-                    console.error("加载资源失败：");
-                    console.log(urls);
+                    console.error("加载资源失败：", urls);
                 }
             }), Handler.create(this, (progress) => {
                 loads.Progress = progress * 100;
@@ -406,6 +404,7 @@
         constructor() {
             this.mStatus = Status.None;
             this.mErr = "";
+            this.mProgress = 0;
         }
         get progress() {
             return this.mProgress;
@@ -429,9 +428,8 @@
             this.onFinish = callback;
             return this;
         }
-        execute(owner = null, callback = null) {
+        execute(owner = null) {
             this.mProgress = 0;
-            this.onFinish = callback;
             if (!this.isRunning) {
                 Laya.timer.frameLoop(1, this, this.update, [owner]);
             }
@@ -459,6 +457,7 @@
             if (this.tick(owner) != Status.Running) {
                 if (this.onFinish != null)
                     this.onFinish.runWith([this.status == Status.Success]);
+                Laya.timer.clear(this, this.update);
             }
         }
         endAction(success = true) {
@@ -469,12 +468,14 @@
             this.latch = true;
             this.mStatus = success ? Status.Success : Status.Failure;
             this.mProgress = this.mStatus == Status.Success ? 1 : 0;
-            Laya.timer.clear(this, this.update);
             this.onStop();
         }
         reset() {
+            this.latch = false;
             this.mStatus = Status.None;
+            Laya.timer.clear(this, this.update);
             this.onReset();
+            this.onForcedStop();
         }
         onExecute() {
         }
@@ -506,7 +507,11 @@
             for (let i = 0; i < this.actions.length; i++) {
                 cur += this.actions[i].progress;
             }
-            return cur / this.actions.length;
+            let v = cur / this.actions.length;
+            v = isNaN(v) ? 0 : v;
+            if (this.actions.length == 0)
+                v = 1;
+            return v;
         }
         onExecute() {
             this.mCurIndex = 0;
@@ -536,10 +541,15 @@
                 if (status == Status.Failure) {
                     this.mErr = this.actions[i].errInfo;
                     this.endAction(false);
+                    if (this.actions[i].onFinish != null)
+                        this.actions[i].onFinish.runWith(true);
                     return;
                 }
-                if (status == Status.Success)
+                if (status == Status.Success) {
                     this.finished.push(i);
+                    if (this.actions[i].onFinish != null)
+                        this.actions[i].onFinish.runWith(true);
+                }
             }
             if (this.finished.length == this.actions.length)
                 this.endAction();
@@ -549,11 +559,17 @@
                 let status = this.actions[i].tick(this.mOwnerSystem);
                 if (status == Status.Failure) {
                     this.endAction(false);
+                    if (this.actions[i].onFinish != null)
+                        this.actions[i].onFinish.runWith(false);
                     return;
                 }
                 if (status == Status.Running) {
                     this.mCurIndex = i;
                     return;
+                }
+                else {
+                    if (this.actions[i].onFinish != null)
+                        this.actions[i].onFinish.runWith(true);
                 }
             }
             this.endAction();
@@ -568,6 +584,11 @@
         addTask(task) {
             this.actions.push(task);
             return this;
+        }
+        clear() {
+            this.reset();
+            this.onForcedStop();
+            this.actions.splice(0, this.actions.length);
         }
     }
 
@@ -642,7 +663,12 @@
     class Scene {
         constructor() {
             this.mSceneTask = new TaskList(ActionsExecutionMode.RunInParallel);
-            this.mSceneTask.setComplete(new Laya.Handler(this, this.onTaskFinish));
+            this.mSequenceTask = null;
+            this.mParallelTask = null;
+            this.mSceneTask.setComplete(new Laya.Handler(this, () => {
+                this.onTaskFinish();
+                this.mSceneTask.actions.splice(0, this.mSceneTask.actions.length);
+            }));
         }
         static init() {
             SceneMgr.init();
@@ -668,8 +694,27 @@
             this.mSceneTask.endAction(false);
             this.onLeaveScene(nextState, param);
         }
-        addSceneTask(task) {
-            this.mSceneTask.addTask(task);
+        addSceneTask(task, executionMode = ActionsExecutionMode.RunInSequence) {
+            if (executionMode == ActionsExecutionMode.RunInParallel) {
+                if (this.mParallelTask != null) {
+                    this.mParallelTask.addTask(task);
+                }
+                else {
+                    this.mParallelTask = new TaskList(executionMode);
+                    this.mParallelTask.addTask(task);
+                    this.mParallelTask.addTask(this.mSequenceTask);
+                }
+            }
+            else {
+                if (this.mSequenceTask != null) {
+                    this.mSequenceTask.addTask(task);
+                }
+                else {
+                    this.mSequenceTask = new TaskList(executionMode);
+                    this.mSequenceTask.addTask(task);
+                    this.mSceneTask.addTask(this.mSequenceTask);
+                }
+            }
             return this;
         }
         onUpdate() {
@@ -689,14 +734,12 @@
     var UIPackage = fgui.UIPackage;
     class LoadFGUIPack {
         constructor(packName) {
-            this.fileName = UIConfig.packRootUrl + "/" + packName;
+            this.fileName = packName;
         }
         load(callback, thisObj) {
-            console.log("加载包" + this.fileName);
-            fgui.UIPackage.loadPackage(this.fileName, Laya.Handler.create(this, () => {
+            fgui.UIPackage.loadPackage(UIConfig.packRootUrl + "/" + this.fileName, Laya.Handler.create(this, () => {
                 this.loaded = true;
                 callback.call(thisObj);
-                console.log("加载完成" + this.fileName);
             }));
         }
     }
@@ -711,6 +754,7 @@
         }
         static add(wind) {
             this.mWinds.set(wind.url, wind);
+            return wind;
         }
         static remove(wind) {
             if (this.mWinds.has(wind.url)) {
@@ -723,7 +767,6 @@
                 let wind = this.mWinds.get(url);
                 wind.data = param;
                 if (wind.isShowing) {
-                    wind.onShown();
                 }
                 else {
                     wind.show();
@@ -763,8 +806,12 @@
                 this.remove(this.mWinds.get(needDel[i]));
             }
         }
+        static del(url) {
+            if (this.mWinds.has(url)) {
+                this.remove(this.mWinds.get(url));
+            }
+        }
         onInit() {
-            console.log("显示成功");
             let windObj = UIPackage.createObjectFromURL(this.url);
             if (windObj == null) {
                 console.error("创建窗口失败 url" + this.url);
@@ -839,9 +886,10 @@
             let task = new TaskList(ActionsExecutionMode.RunInParallel)
                 .addTask(sequence)
                 .addTask(parallel)
-                .execute(null, Laya.Handler.create(this, () => {
+                .setComplete(Laya.Handler.create(this, () => {
                 console.log("任务完成");
-            }));
+            }))
+                .execute(null);
         }
     }
 

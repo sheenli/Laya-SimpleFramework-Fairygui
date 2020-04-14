@@ -1,25 +1,23 @@
 import IUISource = fgui.IUISource;
-import {UIConfig} from "./UIConfig"
+import { UIConfig } from "./UIConfig"
 import UIPackage = fgui.UIPackage;
 
 export class LoadFGUIPack implements IUISource {
     fileName: string;
     loaded: boolean;
-
     constructor(packName) {
-        this.fileName = UIConfig.packRootUrl + "/" + packName;
+        this.fileName = packName;
     }
 
     load(callback: Function, thisObj: any): void {
-        console.log("加载包" + this.fileName);
-        fgui.UIPackage.loadPackage(this.fileName, Laya.Handler.create(this, () => {
+        fgui.UIPackage.loadPackage(UIConfig.packRootUrl + "/" + this.fileName, Laya.Handler.create(this, () => {
             this.loaded = true;
             callback.call(thisObj);
-            console.log("加载完成" + this.fileName);
+            //console.log("加载完成" + this.fileName);
         }));
     }
-
 }
+
 
 export class UIWind extends fgui.Window {
 
@@ -42,6 +40,7 @@ export class UIWind extends fgui.Window {
 
     public static add(wind: UIWind) {
         this.mWinds.set(wind.url, wind);
+        return wind;
     }
 
     public static remove(wind: UIWind) {
@@ -51,12 +50,12 @@ export class UIWind extends fgui.Window {
         }
     }
 
-    public static show(url: string, param?: any) {
+    public static show(url: string, param?: any) { 
         if (this.mWinds.has(url)) {
             let wind = this.mWinds.get(url);
             wind.data = param;
             if (wind.isShowing) {
-                wind.onShown();
+                // wind.onShown();
             } else {
                 wind.show();
             }
@@ -98,8 +97,14 @@ export class UIWind extends fgui.Window {
         }
     }
 
+    public static del(url: string): void {
+        if (this.mWinds.has(url)) {
+            this.remove(this.mWinds.get(url));
+        }
+    }
+
     protected onInit(): void {
-        console.log("显示成功");
+        //console.log("显示成功");
         let windObj = UIPackage.createObjectFromURL(this.url);
         if (windObj == null) {
             console.error("创建窗口失败 url" + this.url);

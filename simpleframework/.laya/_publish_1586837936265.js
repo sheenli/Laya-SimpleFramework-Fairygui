@@ -1,4 +1,4 @@
-// v1.6.1
+// v1.6.0
 //是否使用IDE自带的node环境和插件，设置false后，则使用自己环境(使用命令行方式执行)
 const useIDENode = process.argv[0].indexOf("LayaAir") > -1 ? true : false;
 const useCMDNode = process.argv[1].indexOf("layaair2-cmd") > -1 ? true : false;
@@ -324,8 +324,7 @@ gulp.task("version2", ["version1"], function () {
 		let indexJSPath;
 		let versionCon = fs.readFileSync(versionPath, "utf8");
 		versionCon = JSON.parse(versionCon);
-		let indexJsStr = (versionCon && versionCon["index.js"]) ? versionCon["index.js"] :  "index.js";
-		indexJSPath = releaseDir + "/" + indexJsStr;
+		indexJSPath = releaseDir + "/" + versionCon["index.js"];
 		// 替换config.packfileFullValue中的路径
 		let packfileStr = JSON.stringify(config.packfileFullValue).replace(/\\\\/g, "/");
 		let tempPackfile = `${workSpaceDir}/.laya/configTemp.json`;

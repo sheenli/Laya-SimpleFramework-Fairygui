@@ -30,9 +30,10 @@ export class TaskTest {
         let task = new YK.TaskList(YK.ActionsExecutionMode.RunInParallel)
             .addTask(sequence)
             .addTask(parallel)
-            .execute(null, Laya.Handler.create(this, () => {
+            .setComplete( Laya.Handler.create(this, () => {
                 console.log("任务完成");
-            }));
+            }))
+            .execute(null);
     }
 }
 

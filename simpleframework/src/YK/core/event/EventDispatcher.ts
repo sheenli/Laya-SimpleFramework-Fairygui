@@ -127,8 +127,11 @@ export class EventDispatcher {
         if (length == 0) {
             return;
         }
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < list.length; i++) {
             let eventBin = list[i];
+            if (eventBin == null){
+                continue;
+            }
             eventBin.listener.call(eventBin.thisObject, event);
 
             if (eventBin.dispatchOnce) {

@@ -17,12 +17,14 @@ export class GameFlag {
     }
 
     public add(flag) {
-        this.mValue |= flag;
+        if (!this.has(flag))
+            this.mValue |= flag;
         return this
     }
 
     public remove(flag) {
-        this.mValue &= ~flag;
+        if (this.has(flag))
+            this.mValue &= ~flag;
         return this
     }
 

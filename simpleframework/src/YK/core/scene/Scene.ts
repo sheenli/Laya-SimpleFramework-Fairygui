@@ -58,7 +58,10 @@ export abstract class Scene implements IState {
     protected mSceneTask = new TaskList(ActionsExecutionMode.RunInParallel);
 
     constructor() {
-        this.mSceneTask.setComplete(new Laya.Handler(this, this.onTaskFinish));
+        this.mSceneTask.setComplete(new Laya.Handler(this, () => {
+            this.onTaskFinish();
+            this.mSceneTask.actions.splice(0, this.mSceneTask.actions.length);
+        }));
     }
 
     onEnter(prevState: IState, param: any): void {
@@ -72,8 +75,28 @@ export abstract class Scene implements IState {
         this.onLeaveScene(nextState as Scene, param);
     }
 
-    public addSceneTask(task: Task): Scene {
-        this.mSceneTask.addTask(task);
+    private mSequenceTask: TaskList = null;
+    private mParallelTask: TaskList = null;
+
+    public addSceneTask(task: Task, executionMode: ActionsExecutionMode = ActionsExecutionMode.RunInSequence): Scene {
+        if (executionMode == ActionsExecutionMode.RunInParallel) {
+            if (this.mParallelTask != null) {
+                this.mParallelTask.addTask(task);
+            } else {
+                this.mParallelTask = new TaskList(executionMode);
+                this.mParallelTask.addTask(task);
+                this.mParallelTask.addTask(this.mSequenceTask);
+            }
+        } else {
+            if (this.mSequenceTask != null) {
+                this.mSequenceTask.addTask(task);
+            } else {
+                this.mSequenceTask = new TaskList(executionMode);
+                this.mSequenceTask.addTask(task);
+                this.mSceneTask.addTask(this.mSequenceTask);
+            }
+        }
+
         return this;
     }
 

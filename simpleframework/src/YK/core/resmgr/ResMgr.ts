@@ -80,8 +80,7 @@ export class ResMgr {
                     loads.finish.run();
                 }
             } else {
-                console.error("加载资源失败：");
-                console.log(urls)
+                console.error("加载资源失败：",urls);
             }
         }), Handler.create(this, (progress: number) => {
             loads.Progress = progress * 100;

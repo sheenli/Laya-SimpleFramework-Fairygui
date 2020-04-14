@@ -1,14 +1,14 @@
 export class Func {
-    constructor(func, thisObj) {
+    constructor(func: Function, thisObj: any) {
         this.func = func;
         this.thisObj = thisObj;
     }
 
     public func: Function;
-    public readonly thisObj: any;
+    public thisObj: any;
 
-    run(args: any[] = null) {
-        return this.func.call(this.thisObj, args);
+    run(...argArray: any[]) {
+        return this.func.call(this.thisObj, ...argArray);
     }
 }
 
@@ -21,10 +21,11 @@ export class Listener {
         return listener;
     }
 
-    add(func, thisObj = null) {
+    add(func:Function, thisObj = null) {
         if (!this.has(func, thisObj)) {
             this.func.push(new Func(func, thisObj));
         }
+
     }
 
     remove(func, thisObj = null) {
@@ -38,20 +39,15 @@ export class Listener {
     }
 
     has(func: Function, thisObj: any): boolean {
-        for (let i = this.func.length - 1; i >= 0; i--) {
-            let fun = this.func[i];
-            if (fun.func == func && fun.thisObj == thisObj) {
-                return true;
-            }
-        }
-        return false;
+        return this.func.findIndex(a=>a.thisObj == thisObj && a.func == func) != -1;
+
     }
 
 
-    run(args: any[] = null) {
+    run(...args: any[]) {
         for (let i = 0; i < this.func.length; i++) {
             let func = this.func[i];
-            func.run(args)
+            func.func.call(func.thisObj, ...args);
         }
     }
 }
